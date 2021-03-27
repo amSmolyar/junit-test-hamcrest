@@ -44,11 +44,11 @@ public class AccessCheck {
                 if (password.equals(ii.getPassword())) {
                     return ii;
                 } else {
-                    throw new UserNotFoundException("Пароль не верный");
+                    throw new UserNotFoundException("Wrong password");
                 }
             }
         }
-        throw new UserNotFoundException("Пользователь с таким логином не зарегистрирован");
+        throw new UserNotFoundException("User with login " + login + " is not registered");
     }
 
     public static boolean checkByAge(User user, int age) throws AccessDeniedException, NullPointerException {
@@ -58,7 +58,7 @@ public class AccessCheck {
         if (user.getAge() >= age)
             return true;
         else
-            throw new AccessDeniedException("Возраст пользователя слишком мал");
+            throw new AccessDeniedException("User is too young");
     }
 
     public static List<User> getUserList() {

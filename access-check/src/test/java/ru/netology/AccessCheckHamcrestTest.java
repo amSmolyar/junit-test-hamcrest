@@ -1,9 +1,11 @@
 package ru.netology;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,8 +15,6 @@ import java.util.stream.Stream;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 
 public class AccessCheckHamcrestTest {
     // 1. Проверка, что метод getUserList выдает не NULL:
@@ -31,81 +31,56 @@ public class AccessCheckHamcrestTest {
         System.out.println("checkByAge_NullPointerException");
         try {
             AccessCheck.checkByAge(null, 18);
-            fail("Ожидаемое исключение не было выброшено");
         } catch (NullPointerException | AccessDeniedException e) {
-            assertThat(e.getCause(), instanceOf(NullPointerException.class));
+            assertThat(e.getMessage(), nullValue());
         }
     }
 
     // 3. Проверка метода checkByAge на выброс исключения AccessDeniedException:
-    public static Stream<Integer> getMaxIntValues() {
-        Integer[] intArray = new Integer[99];
-        for (Integer ii = 0; ii < intArray.length; ii++) {
-            intArray[ii] = ii + 2;
-        }
-        return Arrays.stream(intArray);
-    }
-
-    @ParameterizedTest
-    @MethodSource("getMaxIntValues")
-    public void checkByAge_AccessDeniedException(int age) {
-        System.out.println("checkByAge_AccessDeniedException  " + age);
-        try {
-            AccessCheck.checkByAge(new User("stepka@gmail.com", "stepka", "kotik", 1), age);
-            fail("Ожидаемое исключение не было выброшено");
-        } catch (NullPointerException | AccessDeniedException e) {
-            assertThat(e.getCause(), instanceOf(AccessDeniedException.class));
+    @Test
+    public void checkByAge_AccessDeniedException() {
+        for (int age = 2; age < 99; age++) {
+            System.out.println("checkByAge_AccessDeniedException  " + age);
+            try {
+                AccessCheck.checkByAge(new User("stepka@gmail.com", "stepka", "kotik", 1), age);
+            } catch (NullPointerException | AccessDeniedException e) {
+                assertThat(e.getClass(), equalTo(AccessDeniedException.class));
+            }
         }
     }
 
     // 4. Проверка метода checkByAge на то, что исключение AccessDeniedException не будет выброшено:
-    public static Stream<Integer> getMinIntValues() {
-        Integer[] intArray = new Integer[99];
-        for (Integer ii = 0; ii < intArray.length; ii++) {
-            intArray[ii] = ii;
+    @Test
+    public void checkByAge_not_AccessDeniedException() {
+        boolean actual;
+        for (Integer age = 0; age < 100; age++) {
+            System.out.println("checkByAge_not_AccessDeniedException  " + age);
+            actual = false;
+            try {
+                AccessCheck.checkByAge(new User("stepka@gmail.com", "stepka", "kotik", 100), age);
+                actual = true;
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            assertThat(true, equalTo(actual));
         }
-        return Arrays.stream(intArray);
-    }
-
-    @ParameterizedTest
-    @MethodSource("getMinIntValues")
-    public void checkByAge_not_AccessDeniedException(int age) {
-        System.out.println("checkByAge_not_AccessDeniedException  " + age);
-        boolean actual = false;
-        try {
-            AccessCheck.checkByAge(new User("stepka@gmail.com", "stepka", "kotik", 100), age);
-            actual = true;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        assertThat(true, equalTo(actual));
     }
 
     // 5. Проверка, что метод checkByLoginPassword не выбрасывает исключения при вводе существующих
     // значений логина и пароля, и возвращает нужного пользователя:
-    public static Stream<User> getUser() {
-        List<User> users = AccessCheck.getUserList();
-        return users.stream();
-    }
-
-    @ParameterizedTest
-    @MethodSource("getUser")
-    public void checkByLoginPassword_rightUser(User user) {
+    @Test
+    public void checkByLoginPassword_rightUser() {
         System.out.println("checkByLoginPassword_rightUser");
-        User expectedUser = user;
-        User getUser = new User();
-        try {
-            getUser = AccessCheck.checkByLoginPassword(user.getLogin(), user.getPassword());
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            getUser = null;
-        } finally {
-            User actualUser = getUser;
-            assertAll("checkByLoginPassword_rightUser",
-                    () -> assertDoesNotThrow(() ->
-                            AccessCheck.checkByLoginPassword(user.getLogin(), user.getPassword())),
-                    () -> assertEquals(expectedUser, actualUser));
+        List<User> expectedUsers = AccessCheck.getUserList();
+        List<User> actualUsers = new ArrayList<>();
+        for (User user : expectedUsers) {
+            try {
+                actualUsers.add(AccessCheck.checkByLoginPassword(user.getLogin(), user.getPassword()));
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         }
+        assertThat(actualUsers, Matchers.containsInAnyOrder(expectedUsers.toArray()));
     }
 
     // 6. Проверка, что метод checkByLoginPassword выбрасывает исключение всегда,
@@ -124,12 +99,54 @@ public class AccessCheckHamcrestTest {
     @MethodSource("getWrongUser")
     public void checkByLoginPassword_wrongUser(User user) {
         System.out.println("checkByLoginPassword_wrongUser");
+        try {
+            AccessCheck.checkByLoginPassword(user.getLogin(), user.getPassword());
+            fail("Ожидаемое исключение не было выброшено");
+        } catch (NullPointerException | UserNotFoundException e) {
+            assertThat(e.getClass(), equalTo(UserNotFoundException.class));
+        }
+    }
 
-        UserNotFoundException e = assertThrows(UserNotFoundException.class, () ->
-                AccessCheck.checkByLoginPassword(user.getLogin(), user.getPassword())
-        );
+    // 7. Проверка, что метод getUserList возвращает корректный список:
+    @Test
+    public void getUserList_rightList() {
+        System.out.println("getUserList_rightList");
+        List<User> actual = AccessCheck.getUserList();
+        List<User> expected = new ArrayList<>();
+        expected.add(new User("pavlik@gmail.com", "pavlik", "123", 37));
+        expected.add(new User("jack@gmail.com", "jack", "parol", 30));
+        expected.add(new User("antoshka@yandex.ru", "antosha", "behappy", 14));
+        expected.add(new User("zorka@gmail.com", "zarya", "wantcake", 26));
 
-        String message = e.getMessage();
-        assertTrue(message.equals("Пароль не верный") || message.equals("Пользователь с таким логином не зарегистрирован"));
+        assertThat(actual, Matchers.containsInAnyOrder(expected.toArray()));
+    }
+
+    // 8. Проверка, что метод checkByLoginPassword выбрасывает исключение с верным сообщением:
+    // 8.1. Логин верный, но пароль неправильный:
+    @ParameterizedTest
+    @ValueSource(strings = {"pavlik", "jack", "antosha", "zarya"})
+    public void checkByLoginPassword_wrongUser_rightMessage_password(String login) {
+        System.out.println("checkByLoginPassword_wrongUser_rightMessage_password");
+        try {
+            AccessCheck.checkByLoginPassword(login, "bla-bla");
+            fail("Ожидаемое исключение не было выброшено");
+        } catch (NullPointerException | UserNotFoundException e) {
+            String s = e.getMessage();
+            assertThat(e.getMessage(), is("Wrong password"));
+        }
+    }
+
+    // 8.2. Логина нет в базе:
+    @ParameterizedTest
+    @ValueSource(strings = {"one", "two", "three", "four"})
+    public void checkByLoginPassword_wrongUser_rightMessage(String login) {
+        System.out.println("checkByLoginPassword_wrongUser_rightMessage");
+        try {
+            AccessCheck.checkByLoginPassword(login, "bla-bla");
+            fail("Ожидаемое исключение не было выброшено");
+        } catch (NullPointerException | UserNotFoundException e) {
+            String s = e.getMessage();
+            assertThat(e.getMessage(), is("User with login " + login + " is not registered"));
+        }
     }
 }

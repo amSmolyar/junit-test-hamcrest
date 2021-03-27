@@ -126,6 +126,6 @@ class AccessCheckTest {
         );
 
         String message = e.getMessage();
-        assertTrue(message.equals("Пароль не верный") || message.equals("Пользователь с таким логином не зарегистрирован"));
+        assertTrue(message.equals("Wrong password") || message.equals("User with login " + user.getLogin() + " is not registered"));
     }
 }

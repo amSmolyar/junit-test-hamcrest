@@ -1,3 +1,4 @@
 rootProject.name = 'access-check-test'
 include 'access-check'
+include 'selected-system'
 

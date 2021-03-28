@@ -11,9 +11,15 @@ public class CandidateStore {
         candidateSet = new TreeSet<>(new CandidateComparator());
     }
 
+    public Set<Candidate> getCandidateSet() {
+        return candidateSet;
+    }
+
     public void addCandidate(Candidate newCandidate) {
         candidateSet.add(newCandidate);
     }
+
+
 
     public void writeCandidates() {
         Iterator<Candidate> it = candidateSet.iterator();

@@ -19,7 +19,7 @@ public class TreeSelectedSystem {
         scanner.closeScanner();
     }
 
-    private static void addCandidate(CandidateStore candidates) {
+    public static void addCandidate(CandidateStore candidates) {
         candidates.addCandidate(
                 new Candidate("Иванов Иван Иванович", "муж", "28", 4, 5));
         candidates.addCandidate(
